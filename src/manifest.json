@@ -1,0 +1,60 @@
+{
+    "package": "com.thepaper.carplay",
+    "name": "澎湃新闻",
+    "versionName": "1.4",
+    "versionCode": 5,
+    "icon": "/Common/logo.png",
+    "minPlatformVersion": 1045,
+    "features": [
+        {
+            "name": "system.storage"
+        },
+        {
+            "name": "system.prompt"
+        },
+        {
+            "name": "system.shortcut"
+        },
+        {
+            "name": "system.fetch"
+        },
+        {
+            "name": "system.audio"
+        },
+        {
+            "name": "system.network"
+        },
+        {
+            "name": "system.device"
+        },
+        {
+            "name": "system.image"
+        },
+        {
+            "name": "system.uxrestrictions"
+        }
+    ],
+    "permissions": [
+        {
+            "origin": "*"
+        }
+    ],
+    "config": {
+        "designWidth": 878
+    },
+    "router": {
+        "entry": "Homepage",
+        "pages": {
+            "Homepage": {
+                "component": "Homepage",
+                "path": "/Homepage"
+            }
+        }
+    },
+    "display": {
+        "titleBarBackgroundColor": "#031221",
+        "titleBarTextColor": "#fff",
+        "titleBarText": "澎湃新闻随车听",
+        "pages": {}
+    }
+}

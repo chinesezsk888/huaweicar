@@ -1,0 +1,718 @@
+<import name='card-item' src='../Components/CardItem'></import>
+<import name="error-modal" src="../Components/Error"></import>
+<import name="qrcode-modal" src="../Components/Qrcode"></import>
+<import name="prohibit-modal" src="../Components/Prohibit"></import>
+<template>
+  <div>
+    <div class="page {{viewClass}}">
+
+      <div class="{{extraClass}}" style="width:{{panel_width}}">
+        <div class="tab_panel">
+          <tabs onchange="handleTabChange">
+            <tab-bar class="page_nav" mode="{{navMode}}">
+              <div class="nav" for="{{(index,item) in tabs}}" id="tab_{{index}}">
+                <text>{{item.title}}</text>
+              </div>
+            </tab-bar>
+            <tab-content class="tab_content">
+              <div for="{{(index,item) in tabs}}">
+                <block if="{{index==0}}">
+                  <list if="{{selectNews.errorType==''}}" class="{{isListTwo?'list_two':'list_one'}}" id="selectNewsList"
+                    onscrollbottom="loadMoreData">
+                    <list-item type="listItemSelect" for="{{card in selectNews.contList}}">
+                      <card-item item="{{card}}" type="{{itemType}}" focus="{{card.isFocus}}" tab="0" @myclick="onCardClick"></card-item>
+                    </list-item>
+                    <list-item @click="showQrcode" type="listText" if="{{isShowMoreTxt}}" class="more_txt">
+                      <text>更多原创新闻下载澎湃APP ></text>
+                    </list-item>
+                  </list>
+                  <block if="{{selectNews.errorType!=''}}">
+                    <error-modal type="{{selectNews.errorType}}" @retryresquest="retrySelectNewsResquest"></error-modal>
+                  </block>
+                </block>
+                <block if="{{index!=0}}">
+                  <list if="{{hotNews.errorType==''}}" class="{{isListTwo?'list_two':'list_one'}}" id="hotNewslist">
+                    <list-item type="listItemHot" for="{{card in hotNews.contList}}">
+                      <card-item item="{{card}}" type="{{itemType}}" focus="{{card.isFocus}}" tab="1" @myclick="onCardClick"></card-item>
+                    </list-item>
+                    <list-item @click="showQrcode" type="listText" class="more_txt">
+                      <text>更多原创新闻下载澎湃APP ></text>
+                    </list-item>
+                  </list>
+                  <block if="{{hotNews.errorType!=''}}">
+                    <error-modal type="{{hotNews.errorType}}" @retryresquest="retryHotNewsResquest"></error-modal>
+                  </block>
+                </block>
+              </div>
+            </tab-content>
+          </tabs>
+        </div>
+        <block if="{{!isShuView}}">
+          <div class="heng_audio_player">
+            <div class="heng_audio_pic">
+              <image src="{{audioData.pic}}"></image>
+            </div>
+            <div>
+              <text class="heng_audio_title">{{audioData.title}}</text>
+            </div>
+            <div class="heng_player_btns">
+              <div class="{{audioData.hasPrev?'icon_prev':'icon_noprev'}}" @click="onAudioPrev"></div>
+              <div class="{{audioData.isPlay?'icon_pause':'icon_play'}}" @click="onAudioPlay"></div>
+              <div class="{{audioData.hasNext?'icon_next':'icon_nonext'}}" @click="onAudioNext"></div>
+            </div>
+          </div>
+          <div class="page_block_line"></div>
+        </block>
+        <block if="{{isShuView}}">
+          <div class="page_block_line"></div>
+          <div class="shu_audio_player">
+            <div class="{{audioData.isPlay?'icon_pause':'icon_play'}}" @click="onAudioPlay"></div>
+            <text class="shu_audio_desc">{{audioData.title}}</text>
+            <div class="{{audioData.hasNext?'icon_next':'icon_nonext'}}" @click="onAudioNext"></div>
+          </div>
+        </block>
+
+
+        <div class="{{isFirstPlay==1?'qrcode_btn qrcode_btn_show':'qrcode_btn'}}" @click="showQrcode">
+          <block if="{{isFirstPlay==1}}">
+            <div class="icon_iphone qrcode_btn_icon"></div>
+            <text class="qrcode_btn_txt">点击下载澎湃新闻APP-专注时政与思想</text>
+          </block>
+          <block if="{{isFirstPlay!=1}}">
+            <div class="icon_iphone qrcode_btn_icon"></div>
+            <text class="qrcode_btn_txt">APP</text>
+          </block>
+        </div>
+
+      </div>
+    </div>
+
+    <qrcode-modal show-modal="{{isShowQr}}" @on-close-modal="closeQrcodeModal" src="{{qrCodePic}}"></qrcode-modal>
+    <prohibit-modal show-modal="{{isShowQrohibit}}" @on-close-modal="closeProhibitModal"></prohibit-modal>
+  </div>
+</template>
+<script>
+  import device from '@system.device'
+  import audioObj from '@system.audio'
+  import Ajax from '@system.fetch'
+  import network from '@system.network'
+  import prompt from '@system.prompt'
+  import storage from '@system.storage'
+  import restrictions from '@system.uxrestrictions'
+  import { isHasNextPrev, getContList } from '../js/main.js'
+  const UrlBase = 'https://m.thepaper.cn/'
+  let SCREENWIDTH = ''
+  export default {
+    data: {
+      tabs: [{
+        title: '精选要闻'
+      }, {
+        title: '24小时最热'
+      }],
+      activeTab: 0, // 展示tab
+      audioTab: 0, // 播放tab
+      isFirstPlay: 0, // 0第一次播放 1显示下载APP 2不显示下载APP
+      isShowMoreTxt: false,
+      tipsVoiceSrc: '', //间隔音频链接
+      currentListIndex: -1, // 文章列表索引
+      selectNewsNextUrl: '',//下一页
+      selectNews: {
+        scrollTop: 0,
+        errorType: '',
+        contList: []
+      },
+      viewClass: 'heng_view',//横竖屏样式
+      isShuView: true,
+      hotNews: {
+        scrollTop: 0,
+        errorType: '',
+        contList: []
+      },
+      audioData: {
+        isPlay: false, //是否播放
+        title: '播放全部精选要闻', //音频标题
+        pic: '../Common/audio/default_news.png',
+        src: '', //音频src
+        hasNext: false, // 是否有下一个
+        hasPrev: false // 是否有下一个
+      },
+      isShowQr: false,
+      isShowQrohibit: false,
+      qrCodePic: '',
+      navMode:'scrollable',
+      panel_width: '',
+      extraClass: '',
+      isListTwo: false, // 超长横屏特有样式
+      itemType: 0 //item样式
+    },
+    async getClass() {
+      let extra = ''
+      const { screenWidth, screenHeight } = device.getInfoSync()
+      const blObj = {
+        "1:1": 1, // 0.97 1.02
+        "4:3": 1.333,
+        "16:9": 1.777,
+        "8:3": 2.666
+      }
+      const bl = (screenWidth / screenHeight).toFixed(1)
+      if (bl < 1.1) {//竖屏状态
+        this.isShuView = true
+        this.viewClass = 'shu_view'
+        this.navMode = ''
+      } else {
+        if (1.1 <= bl && bl < 1.5) {
+          this.extraClass = 'small_panel'
+          this.itemType = "1"
+          this.isListTwo = false
+        } else if (1.5 <= bl && bl <= 2) {
+          this.itemType = "3"
+          this.extraClass = 'middle_panel'
+          this.isListTwo = false
+        } else {
+          this.extraClass = 'big_panel'
+          this.itemType = "2"
+          this.isListTwo = true
+        }
+        this.isShuView = false
+        this.viewClass = 'heng_view'
+      }
+      // 设置宽度的节点需要靠后，否则会有半边空白的情况
+      await device.getInfo()
+
+      this.panel_width = screenWidth
+      
+      SCREENWIDTH = screenWidth
+    },
+    onInit() {
+      this.getClass()
+      audioObj.artist = '澎湃新闻'
+      if (audioObj.src !== '') { // 说明从状态栏返回，从缓存取值
+        this.getDataFromStore()
+
+      } else {
+        this.getNewsList()
+        this.getHotList()
+        storage.clear()
+      }
+      this.initAudio() //初始化音频回调事件
+      this.getCarStatus() //初始化车辆状态
+      this.carStatusListen() //初始化车辆状态
+    },
+    initAudio() {
+      audioObj.onplay = () => {
+        //this.audioData.isPlay = true;
+      }
+      audioObj.onpause = () => {
+        //this.audioData.isPlay = false;
+      }
+      audioObj.onnext = () => {
+        if (this.audioData.hasNext) { //下一首
+          this.movePlay()
+        }
+      }
+      audioObj.onprevious = () => {
+        if (this.audioData.hasPrev) { //上一首
+          this.movePlay(1)
+        }
+      }
+      audioObj.onended = () => {
+        if (audioObj.src === this.tipsVoiceSrc) {
+          this.onAudioNext()
+        } else {
+          audioObj.pause()
+          audioObj.src = this.tipsVoiceSrc
+          audioObj.play()
+        }
+      }
+      audioObj.onerror = () => {
+        prompt.showToast({
+          message: '网络连接异常，音频加载失败',
+          duration: 2000,
+          gravity: 'center'
+        })
+      }
+    },
+    // 从头播放列表
+    playList(tabType = -1) { //-1 与当前播放tab有关 0 播放精选 1 播放24小时 
+      const contList = getContList(this)
+      if (contList.length === 0) {
+        prompt.showToast({
+          message: '暂无内容，无法播放列表',
+          duration: 2000,
+          gravity: 'center'
+        })
+        return
+      }
+      if (this.isFirstPlay === 0) {
+        this._showAPPDownLoad()
+      }
+      if (tabType === -1) {
+        tabType = this.activeTab
+      }
+      this.audioTab = tabType
+      storage.set({
+        key: 'audioTab',
+        value: this.audioTab
+      })
+      const item = contList[0]
+      audioObj.src = item.voiceSrc
+      audioObj.title = item.name
+      audioObj.play()
+      this.audioData = {
+        ...this.audioData,
+        isPlay: true,
+        title: item.name,
+        src: item.voiceSrc,
+        pic: item.pic,
+        hasNext: true
+      }
+      this._setListItemByAudio(item.contId)
+    },
+    onAudioPlay() {//音频播放按钮
+      if (!this.audioData.isPlay) { // 播放
+        this.audioPlay()
+      } else { // 暂停
+        audioObj.pause()
+        this.audioData.isPlay = false
+      }
+    },
+    audioPlay() {
+      if (this.currentListIndex === -1) {
+        this.playList() // 播放列表
+      } else { // 播放一个
+        if (this.isFirstPlay === 0) {
+          this._showAPPDownLoad()
+        }
+        const contList = getContList(this)
+        audioObj.play()
+        const { hasNext, hasPrev } = isHasNextPrev(contList, this.currentListIndex)
+        this.audioData = {
+          ...this.audioData,
+          isPlay: true,
+          hasNext, hasPrev
+        }
+      }
+    },
+    showQrcode() {//二维码弹框
+      this.isShowQr = true
+    },
+    closeQrcodeModal() {
+      this.isShowQr = false
+    },
+    closeProhibitModal() {
+      this.isShowQrohibit = false
+    },
+    onAudioNext() {
+      if (this.audioData.hasNext) { //下一首
+        this.movePlay()
+      }
+    },
+    onAudioPrev() {
+      if (this.audioData.hasPrev) { //上一首
+        this.movePlay(1)
+      }
+    },
+    //显示推广app信息，应用执行阶段只展示一次
+    _showAPPDownLoad() {
+      this.isFirstPlay = 1
+      setTimeout(() => {
+        this.isFirstPlay = 2
+      }, 5000)
+    },
+    // tab框点击回调
+    handleTabChange({ index }) {
+      if (this.isFirstPlay === 0) {
+        const title = ['播放全部精选要闻', '播放全部24小时最热'][index]
+        const pic = ['../Common/audio/default_news.png', '../Common/audio/default_hots.png'][index]
+        this.audioTab = index
+        this.audioData = {
+          ...this.audioData, title, pic
+        }
+      }
+      this.activeTab = index
+    },
+    // 根据播放状态修改列表数据状态
+    _setListItemByAudio(contId) {
+      const contList = getContList(this)
+      const { selectNews, hotNews } = this
+      const index = contList.findIndex(item => {
+        if (item.contId === contId) {
+          return true
+        }
+      })
+      if (index < 0) {
+        return
+      }
+      if (selectNews.contList[this.currentListIndex]) {
+        selectNews.contList[this.currentListIndex]['isFocus'] = false
+      }
+      if (hotNews.contList[this.currentListIndex]) {
+        hotNews.contList[this.currentListIndex]['isFocus'] = false
+      }
+      contList[index]['isFocus'] = true
+      this.currentListIndex = index
+      storage.set({
+        key: 'currentListIndex',
+        value: this.currentListIndex
+      })
+      this.hotNews = hotNews
+      this.selectNews = selectNews
+      return {
+        contList,
+        index
+      }
+    },
+    onCardClick(event) {
+      if (this.isFirstPlay === 0) {
+        this._showAPPDownLoad()
+      }
+      const item = event.detail.item
+      const { voiceSrc, name } = item
+      const contId = item.contId
+      this.audioTab = this.activeTab
+      storage.set({
+        key: 'audioTab',
+        value: this.audioTab
+      })
+      const { contList, index } = this._setListItemByAudio(contId)
+      const { hasNext, hasPrev } = isHasNextPrev(contList, index)
+      audioObj.src = voiceSrc
+      audioObj.title = name
+      audioObj.play()
+
+      this.audioData = {
+        ...this.audioData,
+        isPlay: true,
+        title: item.name,
+        src: item.voiceSrc,
+        pic: item.pic,
+        hasNext, hasPrev
+      }
+    },
+    // 上一篇下一篇
+    movePlay(type = 0) { // type==0 下一篇 type==1 上一篇 
+      const contList = getContList(this)
+      let index
+      if (type === 0) {
+        index = this.currentListIndex + 1
+      } else {
+        index = this.currentListIndex - 1
+      }
+      const item = contList[index]
+      const { hasNext, hasPrev } = isHasNextPrev(contList, index)
+
+      this.audioData = {
+        ...this.audioData,
+        isPlay: true,
+        title: item.name,
+        src: item.voiceSrc,
+        pic: item.pic,
+        hasNext, hasPrev
+      }
+
+      audioObj.src = item.voiceSrc
+      audioObj.title = item.name
+      audioObj.play()
+
+      this._setListItemByAudio(item.contId)
+
+    },
+    // 从缓存获取数据
+    async getDataFromStore() {
+      const selectNews = await storage.get({
+        key: 'selectNews'
+      })
+      const hotNews = await storage.get({
+        key: 'hotNews'
+      })
+      const audioTab = await storage.get({
+        key: 'audioTab'
+      })
+      const currentListIndex = await storage.get({
+        key: 'currentListIndex'
+      })
+      this.panel_width = SCREENWIDTH
+      this.dealNewsList(JSON.parse(selectNews.data))
+      this.dealHotList(JSON.parse(hotNews.data))
+      this.currentListIndex = parseInt(currentListIndex.data)
+      this.audioTab = parseInt(audioTab.data)
+      const contList = getContList(this)
+      const item = contList[this.currentListIndex]
+      item['isFocus'] = true
+      const { hasNext, hasPrev } = isHasNextPrev(contList, this.currentListIndex)
+      this.audioData = {
+        isPlay: true,
+        title: item.name,
+        src: item.voiceSrc,
+        pic: item.pic,
+        hasNext, hasPrev
+      }
+      this.isFirstPlay = 2
+
+    },
+    // 处理要闻数据
+    dealNewsList(resData) {
+      const { contList, nextUrl, qrCodePic, tipsVoiceSrc } = resData
+      if (contList.length === 0) {
+        this.selectNews.errorType = '0'
+      } else {
+        this.selectNews.errorType = ''
+        const contListTemp = contList.map((item) => {
+          item['isFocus'] = false
+          return item
+        })
+
+        this.selectNews.contList = this.selectNews.contList.concat(contListTemp)
+      }
+      this.selectNewsNextUrl = nextUrl
+      this.qrCodePic = qrCodePic
+      this.tipsVoiceSrc = tipsVoiceSrc
+      if (nextUrl === '') {
+        this.isShowMoreTxt = true
+      }
+    },
+    // 处理24小时最热数据
+    dealHotList(resData) {
+      const { contList } = resData
+      if (contList.length === 0) {
+        this.hotNews.errorType = '0'
+      } else {
+        this.hotNews.errorType = ''
+        const contListTemp = contList.map((item) => {
+          item['isFocus'] = false
+          return item
+        })
+        this.hotNews.contList = this.hotNews.contList.concat(contListTemp)
+      }
+    },
+    //获取精选要闻
+    async getNewsList(url = UrlBase + 'alios_channel_list.jsp') {
+      const { data: { type } } = await network.getType()
+      if (type !== 'none') {
+        try {
+          const res = await Ajax.fetch({ url: url, method: 'get' })
+          this.panel_width = SCREENWIDTH
+          const resData = JSON.parse(res.data.data)
+          storage.set({
+            key: 'selectNews',
+            value: resData
+          })
+          this.dealNewsList(resData)
+        } catch (error) {
+          this.selectNews.errorType = '2'
+        }
+      } else {
+        this.selectNews.errorType = '1'
+      }
+    },
+    //精选要闻加载更多
+    loadMoreData() {
+      if (this.selectNewsNextUrl !== '') {
+        this.getNewsList(this.selectNewsNextUrl)
+      }
+    },
+    //获取24小时最热
+    async getHotList() {
+      const { data: { type } } = await network.getType()
+      if (type !== 'none') {
+        try {
+          const res = await Ajax.fetch({
+            url: UrlBase + 'alios_channel_list.jsp?n=-1',
+            method: 'get'
+          })
+          const resData = JSON.parse(res.data.data)
+          storage.set({
+            key: 'hotNews',
+            value: resData
+          })
+          this.dealHotList(resData)
+        } catch (error) {
+          this.hotNews.errorType = '2'
+        }
+      } else {
+        this.hotNews.errorType = '1'
+      }
+    },
+    retrySelectNewsResquest() {
+      this.selectNews.errorType = ''
+      this.getNewsList()
+    },
+    retryHotNewsResquest() {
+      this.hotNews.errorType = ''
+      this.getHotList()
+    },
+    // 获取车辆的状态
+    getCarStatus() {
+      const that = this
+      restrictions.getUxRestrictions({
+        restrictionsType: 64,
+        success: function (res) {
+          let restricted = res.isRestricted
+          if (restricted && that.isShowQr) {
+            that.isShowQrohibit = true
+          }
+        }
+      })
+    },
+    // 监听车辆的状态变化
+    carStatusListen() {
+      const that = this
+      restrictions.registerUxRestrictionsListener({
+        restrictionsType: 64,
+        success: function (res) {
+          let restricted = res.isRestricted
+          if (restricted && that.isShowQr) {
+            that.isShowQrohibit = true
+          }
+        }
+      })
+    }
+  }
+</script>
+<style lang="less">
+  @import "../css/style.css";
+  /*横屏 */
+  .heng_view {
+    padding: 0 36px;
+  }
+  .heng_view {
+    .tab_panel {
+      padding-left: 626px;
+    }
+    .tab_content {
+      padding: 0;
+    }
+    .page_nav .nav {
+      margin-right: 88px;
+    }
+    .heng_audio_player {
+      display: flex;
+      padding: 48px 60px 44px;
+      position: fixed;
+      flex-direction: column;
+      left: 36px;
+      top: 0;
+      width: 590px;
+      height: 648px;
+
+      background: linear-gradient(180deg, #1D2C38 0%, #0A1A2B 100%);
+
+      border-radius: 10px;
+      border: 1px solid;
+    }
+    .heng_audio_pic {
+      width: 470px;
+      height: 264px;
+      margin: 0 auto;
+      margin-bottom: 40px;
+    }
+    .heng_audio_title {
+      width: 480px;
+      text-align: center;
+      color: #fff;
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 48px;
+      margin: 0 auto;
+    }
+    .heng_audio_pic image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .qrcode_btn {
+      left: 662px;
+      bottom: 37px;
+    }
+    .qrcode_btn_show {
+      width: 582px;
+    }
+    .heng_player_btns {
+      width: 470px;
+      position: absolute;
+      bottom: 44px;
+      left: 60px;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .icon_pause,
+    .icon_play {
+      height: 100px;
+      width: 100px;
+    }
+    .icon_next,
+    .icon_nonext,
+    .icon_prev,
+    .icon_noprev {
+      height: 80px;
+      width: 80px;
+    }
+
+    .page_block_line {
+      background: linear-gradient(180deg, rgba(36, 44, 52, 0) 0%, #242C34 100%);
+    }
+    .small_panel .heng_audio_player{
+      width: 474px;
+      padding: 48px 32px 0;
+    }
+    .small_panel .heng_audio_pic {
+      width: 410px;
+      height:230px;
+      margin-bottom:55px;
+    }
+    .small_panel .heng_audio_title,
+    .small_panel .heng_player_btns {
+      width: 410px;
+    }
+    .small_panel .heng_player_btns {
+      left: 32px;
+    }
+    .small_panel .tab_panel {
+      padding-left: 506px;
+    }
+    .small_panel .qrcode_btn {
+      left: 538px;
+    }
+    .list_one {
+      columns: 1;
+    }
+    .list_two {
+      columns: 2;
+    }
+    .list_two .more_txt {
+      padding: 30px 0 70px;
+    }
+  }
+  /***竖屏 */
+  .shu_audio_player {
+    width: 91.79%;
+    height: 136px;
+    background: linear-gradient(180deg, #1d2c38 0%, #0a1a2b 100%);
+    border-radius: 12px;
+    position: fixed;
+    bottom: 36px;
+    left: 36px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 36px;
+  }
+  .shu_audio_desc {
+    width: 528px;
+    height: 64px;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .shu_view {
+    .page_nav text {
+      width: 400px;
+      text-align: center;
+    }
+    .qrcode_btn {
+      right: 36px;
+    }
+    .page_block_line {
+      background-color: #031221;
+    }
+  }
+</style>

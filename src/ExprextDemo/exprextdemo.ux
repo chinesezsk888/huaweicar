@@ -1,0 +1,104 @@
+<import name="error-modal" src="../Components/Error"></import>
+<import name="qrcode-modal" src="../Components/Qrcode"></import>
+<import name="prohibit-modal" src="../Components/Prohibit"></import>
+<template>
+    <div class="dome_page">
+      <text onclick="showQrcodeModal">点击跳出二维码的弹框</text>
+      <text onclick="showError">点击跳出错误页面</text>
+      <text onclick="showProhibitModal">点击跳出高速禁止操作弹框</text>
+      <error-modal type="{{selectNews.errorType}}" onretryresquest="retryResquest"></error-modal>
+      <qrcode-modal show-modal="{{showQrcode}}" @on-close-modal="closeQrcodeModal" src="{{qrcodeSrc}}"></qrcode-modal>
+      <prohibit-modal show-modal="{{showQrohibit}}" @on-close-modal="closeProhibitModal"></prohibit-modal>
+    </div>
+</template>
+<script>
+  // import prompt from '@system.prompt'
+  import restrictions from '@system.uxrestrictions'
+  module.exports = {
+    data: {
+      selectNews: {
+        errorType: ''
+      },
+      showQrcode: false,
+      showQrohibit: false,
+      qrcodeSrc: 'https://testimagecloud.thepaper.cn/testthepaper/image/8/518/688.jpg'
+    },
+    onInit() {
+      this.getCarStatus()
+      this.carStatusListen()
+    },
+    showError: function() {
+      console.log(this.pageErrorType)
+      this.selectNews.errorType = '2'
+    },
+    retryResquest: function() {
+      this.selectNews.errorType = ''
+    },
+    // 二维码弹框
+    showQrcodeModal: function() {
+      console.log("二维码弹框")
+      this.showQrcode = true
+    },
+    closeQrcodeModal: function() {
+      console.log("二维码弹框隐藏")
+      this.showQrcode = false
+    },
+    // 车辆禁止弹框
+    showProhibitModal: function(){
+      this.showQrohibit = true
+    },
+    closeProhibitModal: function() {
+      this.showQrohibit = false
+    },
+    // 获取车辆的状态
+    getCarStatus() {
+      const that = this
+      restrictions.getUxRestrictions({
+        restrictionsType: 64,
+        success: function (res) {
+          let restricted = res.isRestricted;
+          console.log("注册车辆状态监听改变： restricted ", restricted);
+          if (restricted && that.showQrcode) {
+            that.showQrohibit = true
+          }
+        },
+        fail: function (erromsg) {
+          console.log("车辆状态： fail ", erromsg);
+        },
+        complete: function () {
+          console.log("车辆状态： complete");
+        }
+      })
+    },
+    // 监听车辆的状态变化
+    carStatusListen() {
+      const that = this
+      restrictions.registerUxRestrictionsListener({
+        restrictionsType: 64,
+        success: function (res) {
+          let restricted = res.isRestricted;
+          console.log("车辆状态变化，监听回调：  restricted ", restricted);
+          if(restricted && that.showQrcode) {
+            that.showQrohibit = true
+          }
+        },
+        fail: function (erromsg) {
+          console.log("车辆状态变化，监听回调：  fail ", erromsg);
+        },
+        complete: function () {
+          console.log("方法调用完成：  complete");
+        }
+      })
+    }
+  }
+</script>
+<style>
+.dome_page {
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+}
+.dome_page text {
+  margin: 40px 0;
+}
+</style>

@@ -1,0 +1,97 @@
+<template>
+  <div class="modal_box">
+    <!-- 错误提示 -->
+    <div class="error_box" show="{{type!=''}}">
+      <div onclick="retryResquest">
+        <div class="empty_icon" if="type=='0'"></div>
+        <div class="inter_icon" elif="type=='1'"></div>
+        <div class="request_icon" elif="type=='2'"></div>
+      </div>
+      <div onclick="retryResquest">
+        <text class="error_text" if="type=='0'">暂无内容</text>
+        <text class="error_text" elif="type=='1'">网络中断</text>
+        <text class="error_text" elif="type=='2'">加载失败</text>
+      </div>
+      <div class="error_bth" onclick="retryResquest"><text>{{type=='0'? '刷新': '重试'}}</text></div>
+    </div>
+  </div>
+</template>
+<script>
+  export default {
+    props: {
+      type: String // 0 暂无内容 1 网络中断 2 加载失败
+    },
+    retryResquest: function () {
+      this.$emit('retryresquest')
+      switch (this.type) {
+        case "0":
+          console.log("暂无内容")
+          break;
+        case "1":
+          console.log("网络中断，请检查网络")
+          break;
+        case "2":
+          console.log("加载失败，请点击重试")
+          break;
+      }
+    }
+  }
+</script>
+<style>
+  .modal_box {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+  .error_box {
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #031221;
+  }
+  .error_box .empty_icon {
+    width: 160px;
+    height: 160px;
+    background-image: url("../Common/error/empty_icon.png");
+    background-size: 100% 100%;
+  }
+  .error_box .inter_icon {
+    width: 160px;
+    height: 160px;
+    background-image: url("../Common/error/int_error.png");
+    background-size: 100% 100%;
+  }
+  .error_box .request_icon {
+    width: 160px;
+    height: 160px;
+    background-image: url("../Common/error/load_error.png");
+    background-size: 100% 100%;
+  }
+  .error_text {
+    font-size: 24px;
+    font-weight: 400;
+    color: #FFFFFF;
+    line-height: 28px;
+    margin: 24px 0 32px;
+  }
+  .error_bth {
+    width: 320px;
+    height: 64px;
+    border-radius: 32px;
+    opacity: 0.86;
+    border: 2px solid #FFFFFF;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .error_bth text {
+    font-size: 24px;
+    font-weight: 400;
+    color: #FFFFFF;
+    line-height: 28px;
+  }
+</style>

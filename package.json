@@ -1,0 +1,33 @@
+{
+  "name": "huaweicar.0.01",
+  "version": "1.0.0",
+  "subversion": {
+    "toolkit": "0.2.2"
+  },
+  "description": "",
+  "scripts": {
+    "server": "hap server",
+    "postinstall": "hap postinstall",
+    "debug": "hap debug",
+    "build": "hap build",
+    "release": "hap release",
+    "watch": "hap watch",
+    "hap-update": "hap update",
+    "fa-build": "node node_modules/webpack/bin/webpack.js --config ./node_modules/fa-toolkit/webpack.config.js",
+    "fa-watch": "node node_modules/webpack/bin/webpack.js --watch --config ./node_modules/fa-toolkit/webpack.config.js",
+    "fa-release": "node ./node_modules/cross-env/src/bin/cross-env.js uglifyjs=true sign=release node_modules/webpack/bin/webpack.js --config ./node_modules/fa-toolkit/webpack.config.js"
+  },
+  "devDependencies": {
+    "hap-toolkit": "*",
+    "fa-toolkit": "file:fa-toolkit-3.0.2-Stable.300.tgz",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.12.1",
+    "eslint-plugin-hybrid": "0.0.5",
+    "sass-loader": "^8.0.2",
+    "node-sass": "^4.13.1",
+    "cross-env": "^7.0.2"
+  },
+  "browserslist": [
+    "chrome 65"
+  ]
+}

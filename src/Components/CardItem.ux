@@ -1,0 +1,115 @@
+<template>
+  <div>
+    <block if="{{type==0}}">
+      <div class="item" @click="handleClick">
+        <image class="thumbnail" src="{{item.pic}}"></image>
+        <div class="con">
+          <text class="{{focus?'title title_bold':'title'}}">{{item.name}}</text>
+          <text class="date">{{item.pubTime}}</text>
+          <div class="playing" show="{{focus}}"></div>
+        </div>
+      </div>
+    </block>
+    <block if="{{type==1}}">
+      <div class="item" @click="handleClick">
+        <div class="con">
+          <text class="{{focus?'title title_bold':'title'}}">{{item.name}}</text>
+          <text class="date">{{item.pubTime}}</text>
+          <div class="playing" show="{{focus}}"></div>
+        </div>
+      </div>
+    </block>
+    <block if="{{type==2}}">
+      <div class="item big_heng_item" @click="handleClick">
+        <image class="thumbnail" src="{{item.pic}}"></image>
+        <div class="con">
+          <text class="{{focus?'title title_bold':'title'}}">{{item.name}}</text>
+          <text class="date">{{item.pubTime}}</text>
+          <div class="playing" show="{{focus}}"></div>
+        </div>
+      </div>
+    </block>
+    <block if="{{type==3}}">
+      <div class="item heng_item" @click="handleClick">
+        <image class="thumbnail" src="{{item.pic}}"></image>
+        <div class="con">
+          <text class="{{focus?'title title_bold':'title'}}">{{item.name}}</text>
+          <text class="date">{{item.pubTime}}</text>
+          <div class="playing" show="{{focus}}"></div>
+        </div>
+      </div>
+    </block>
+  </div>
+</template>
+<script>
+  export default {
+    props: {
+      type:{
+        default:0 // 0 竖item 1 小item 2 两列时item 3 横item
+      },
+      item: Object,
+      tab: {
+        default: 0
+      },
+      focus: {
+        type: Boolean,
+        default: false,
+      }
+    },
+    handleClick() {
+      this.$emit('myclick', { item: this.item })
+    }
+  }
+</script>
+<style>
+  .item {
+    width: 100%;
+    margin-top: 40px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .con {
+    width: 100%;
+    flex-direction: column;
+  }
+  .title_bold {
+    font-weight: bold;
+  }
+  .title {
+    width: 100%;
+    font-size: 28px;
+    color: #fff;
+    margin-bottom: 16px;
+    line-height: 36px;
+  }
+  .date {
+    font-size: 20px;
+    color: #999;
+  }
+  .thumbnail {
+    flex-shrink: 0;
+    width: 184px;
+    height: 104px;
+    border-radius: 8px;
+    margin-right: 32px;
+    object-fit: cover;
+  }
+  .playing {
+    background-image: url("/Common/list/focus.gif");
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 28px;
+    width: 28px;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+  }
+
+  .heng_item .thumbnail {
+    width: 195px;
+    height: 110px;
+  }
+  .big_heng_item  {
+    padding-right: 36px;
+  }
+</style>

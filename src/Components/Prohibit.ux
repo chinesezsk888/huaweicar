@@ -1,0 +1,74 @@
+<template>
+  <div class="prohibit_modal">
+    <div class="modal prohibit_modal_box" onclick="closeProhibitModal" show="{{showModal}}">
+      <block>
+        <stack class="prohibit_stack_box">
+          <div class="prohibit_stack">
+            <div class="prohibit_icon"></div>
+            <div class="prohibit_text">
+              <text>为保证行驶安全</text>
+              <text>请在车辆静止时使用该功能</text>
+            </div>
+            <div class="close_modal" onclick="closeProhibitModal"></div>
+          </div>
+        </stack>
+      </block>
+    </div>
+  </div>
+</template>
+<script>
+   export default {
+    props: {
+      showModal: Boolean
+    },
+    closeProhibitModal: function () {
+      this.$emit('onCloseModal')
+    }
+  }
+</script>
+<style>
+  .modal {
+    position: fixed;
+    flex-direction: column;
+    justify-content: flex-end;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+  }
+  .prohibit_stack_box {
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .prohibit_stack {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .prohibit_stack .prohibit_icon {
+    width: 180px;
+    height: 180px;
+    background-image: url("../Common/error/prohibit_icon.png");
+    background-size: 100% 100%;
+  }
+  .prohibit_stack .prohibit_text {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 32px 0 80px;
+  }
+  .prohibit_stack text {
+    font-size: 32px;
+    font-weight: 400;
+    color: #FFFFFF;
+    line-height: 36px;
+  }
+  .prohibit_stack .close_modal {
+    width: 80px;
+    height: 80px;
+    background-image: url("../Common/error/qrcode_close_icon.png");
+    background-size: 100% 100%;
+  }
+</style>

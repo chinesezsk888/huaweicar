@@ -1,0 +1,86 @@
+<template>
+  <div class="container">
+    <div class="swiper-container">
+      <list class="list">
+        <list-item type="listItemSelect" for="{{item in swiperList}}">
+          <image src="{{item.src}}" class="list_image"></image>
+        </list-item>
+      </list>
+      <div class="right" for="carditem in rightCrad">
+        <text>{{carditem.text}}</text>
+      </div>
+    </div>
+  </div>
+</template>
+<style>
+  .container {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 30px;
+    background-color: #00bfff;
+  }
+  .swiper-container {
+    width: 100%;
+    height: 600px;
+    flex-direction: column;
+    background-color: red;
+    padding-left: 500px;
+  }
+  .list {
+    position: absolute;
+    left: 0;
+    width: 500px;
+    height: 100%;
+    background-color: #008000;
+    flex-direction: column;
+  }
+  .list_image{
+    width: 400px;
+    height: 200px;
+  }
+  .right {
+    width: 100%;
+    height: 200px;
+  }
+  .right text {
+    width: 100%;
+    height: 100%;
+  }
+</style>
+<script>
+module.exports = {
+  data: {
+    componentData: {},
+    swiperList:[
+      {
+        id:'111',
+        src: 'https://testimagecloud.thepaper.cn/testthepaper/image/8/518/688.jpg'
+      },
+      {
+        id:'112',
+        src: 'https://testimagecloud.thepaper.cn/testthepaper/image/5/88/785.jpg'
+      },
+      {
+        id:'113',
+        src: 'https://testimagecloud.thepaper.cn/testthepaper/image/4/974/691.jpg'
+      }
+    ],
+    rightCrad:[
+      {
+        text: '金额日记你啥金额日记你啥金额日记你啥水人头狗进入偏少惹她见华为节都比我撒'
+      },
+      {
+        text: '科技笔记铺科技笔记铺科技笔记铺科技笔记铺李坡拉可视对讲发票水人头狗进我撒科技笔记铺'
+      },
+      {
+        text: '李dsjfkldm；进入偏少金额日记你啥都不是德生科技笔记铺设撒科技笔记铺科技笔记铺科技笔记铺'
+      }
+    ]
+  },
+  onInit() {
+  },
+}
+</script>

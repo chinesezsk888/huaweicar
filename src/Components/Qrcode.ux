@@ -1,0 +1,69 @@
+<template>
+  <div class="center_modal">
+    <div class="modal qrcode_modal_box" onclick="closeQrcodeModal" show="{{showModal}}">
+      <block>
+        <stack class="qrcode_stack_box">
+          <div class="qrcode_stack">
+            <image src="{{src}}"></image>
+            <div class="close_modal" onclick="closeQrcodeModal"></div>
+          </div>
+        </stack>
+      </block>
+    </div>
+  </div>
+</template>
+<script>
+   export default {
+    props: {
+      showModal: Boolean,
+      src: String
+    },
+    closeQrcodeModal: function () {
+      this.$emit('onCloseModal')
+    }
+  }
+</script>
+<style>
+  .modal {
+    position: fixed;
+    flex-direction: column;
+    justify-content: flex-end;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.18);
+    animation-name: Modal;
+    animation-duration: 300ms;
+    animation-timing-function: ease-in;
+  }
+  .qrcode_stack_box {
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .qrcode_stack {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .qrcode_stack image {
+    width: 400px;
+    height: 400px;
+  }
+  .qrcode_stack .close_modal {
+    width: 80px;
+    height: 80px;
+    margin-top: 20px;
+    background-image: url("../Common/error/qrcode_close_icon.png");
+    background-size: 100% 100%;
+  }
+  @keyframes Modal {
+    from {
+      top: 1000px;
+    }
+    to {
+      top: 0px;
+    }
+  }
+</style>

@@ -1,0 +1,13 @@
+<script>
+export default  {
+  onCreate() {
+  
+  },
+  onDestroy() {
+
+  },
+  dataApp: {
+    localeData: {}
+  }
+}
+</script>
